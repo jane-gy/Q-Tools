@@ -1,0 +1,346 @@
+includeWeb('QScript Selection Functions');
+includeWeb('QScript Questionnaire Functions');
+includeWeb('QScript Utility Functions');
+includeWeb('QScript Value Attributes Functions');
+includeFile('Questions.QScript')
+includeFile('ReverseScales.QScript')
+
+function getQs(dataFile) {
+    var pickOnes = getAllQuestionsByTypes([dataFile], ["Pick One", "Pick One - Multi"]);
+    pickOnes = pickOnes.sort(function (a,b) {
+        return a.name.localeCompare(b.name, undefined, { numeric: true, sensitivity: 'base' });
+    });
+    
+    return pickOnes;
+}
+ 
+/* Organize loop questions into array of objects */
+/* */
+function readQs(questions) {
+    var pickOnes = questions;
+//     var pickOnes = getAllQuestionsByTypes([dataFile], ["Pick One", "Pick One - Multi"]);
+
+    var reg_r = "(.*?)r\\d+:*.*?"
+    var reg_c = "(.*?)c\\d+:*.*?"
+    var reg_und = "(.*?)_\\d+:*.*?"
+    var reg_rr = "(.*?)r(\\d)+r(\\d+):*.*?" // r1r1,r2r1,r3r1
+    var reg_rc = "(.*?)r(\\d+)c(\\d+):*.*?" // r1c1,r2c1,r3c1
+
+    var regArr = [reg_r, reg_c, reg_und, reg_rr, reg_rc];
+
+    var loopCont = false;
+    var reg_chosen;
+    var core;
+    var questionObjs = new Array();
+    var question = new PickOneQ();
+    
+
+    for (var i = 0; i < pickOnes.length; i++) {
+        var q = pickOnes[i];
+            
+        if (!loopCont) {
+            for (var j = 0; j < regArr.length; j++) {
+                var re = new RegExp(regArr[j]);
+                if (re.test(q.name)) {
+                    reg_chosen = re;
+                    core = reg_chosen.exec(q.name);
+                    
+                    question.question.push(q);
+                    question.questionName = core[1];
+                    question.variables.push(q);
+                    question.labels = valueLabels(q);
+                    question.questionLabel = core[2];
+                    question.partOfLoop = true;
+                    
+                    loopCont = true;
+                    
+                    if (i+1 == pickOnes.length) {
+                        continue;
+                    } else {
+                        nextName = reg_chosen.exec(pickOnes[i+1].name);
+                        if (!reg_chosen.test(pickOnes[i+1].name) || nextName[1] != core[1]) {
+                            loopCont = false;
+                            partOfLoop = false;
+                            questionObjs.push(question)
+                            question = new PickOneQ();
+
+                            break;
+                        }
+                        break;
+                    }
+                }
+            }
+            
+            if (!loopCont) {
+                question.question.push(q);
+                question.questionName = q.name;
+                question.variables.push(q);
+                question.labels = valueLabels(q);
+                questionObjs.push(question);
+                
+                question = new PickOneQ();
+            }
+                
+        } else {
+            if (reg_chosen.test(q.name)) {
+                currName = reg_chosen.exec(q.name);
+                try {
+                    nextName = reg_chosen.exec(pickOnes[i+1].name);
+                } catch(e) {
+                    break;
+                }
+
+                if (currName[1] == core[1]) {
+                    question.variables.push(q);
+                    question.question.push(q);
+                    if (!reg_chosen.test(pickOnes[i+1].name) || nextName[1] != currName[1]) {
+                        loopCont = false;
+                        questionObjs.push(question);
+                        question = new PickOneQ();
+                    }
+                } else {
+                    loopCont = false;
+                    questionObjs.push(question);
+                    question = new PickOneQ();
+                }
+            } 
+        }   
+    }
+
+    for (var i = 0; i < questionObjs.length; i++) {
+        var tempArr = [];
+        questionObjs[i].variables.map(function (v) {
+            tempArr.push(v.variables[0]);
+        });
+        questionObjs[i].variables = tempArr;                   
+    }
+
+    return questionObjs;
+}
+
+/* Choose Qs */
+function chooseQs(questionObjs, prompt) {
+    var labelStrings = questionObjs.map(function (obj) {
+        let label = getHighestAndLowestValueAndLabel(obj.question[0]);
+        let qLabel = truncateStringForSelectionWindow(String(obj.questionName));
+        
+        let finalLabel = "(" + label.lowest + "..." + label.highest + ")";
+        
+        return qLabel + "..........." + finalLabel;
+
+    });
+    let selectedIndices = selectMany(prompt + ": ", labelStrings);
+    var selectedTables = getElementsOfArrayBySelectedIndices(questionObjs, selectedIndices);
+    
+    return selectedTables;
+}
+
+/* Create sum tables and returns an array of sum table question names */
+function createSumTable(dataFile, questionObj, nonscale, scale, numeric, custom, customVals) {
+    var duplicatedVars = [];
+    var qName = '';
+    var labels = questionObj.labels;
+    labels = labels.filter(x => x !== "Missing data");
+    var length = 0;
+    var scaleVals = []
+    
+    var core = questionObj.questionName;
+    var length = 0;
+    
+    
+    if (nonscale && !numeric) {
+        for (var i = 0; i < labels.length; i++) {
+            questionObj.variables.map(function (v) {
+                duplicatedVars.push(v.duplicate());
+            });
+            lastVar = questionObj.variables[questionObj.variables.length-1];
+            qName = core + " (" + labels[i] + ")";
+            dataFile.setQuestion(qName, "Pick Any", duplicatedVars);
+            var question = dataFile.getQuestionByName(qName);
+
+            for (var j = 0; j < labels.length + 1; j++) {
+                if (j == i+1) {
+                    setCountThisValueForVariablesInQuestion(question, i+1, true);
+                } else {
+                    setCountThisValueForVariablesInQuestion(question, j, false);
+                }
+            }
+            dataFile.moveAfter(duplicatedVars, lastVar);
+            duplicatedVars = [];
+        }
+    }
+    
+    if (scale) {        
+        // log(questionObj.variables);
+        length = labels.length;
+        scaleVals = [[length], [length-1, length], [1, 2], [1]];
+        if (questionObj.reversed) {
+            labels = labels.reverse();
+            scaleVals = scaleVals.reverse();
+        }
+
+        var top_label = "Top Box (" + labels[0] + ")";
+        var top2_label = "Top 2 Box (" + labels[0] + "/" + labels[1] + ")";
+        var bottom2_label = "Bottom 2 Box (" + labels[labels.length - 2] + "/" + labels[labels.length - 1] + ")";
+        var bottom_label = "Bottom Box (" + labels[labels.length - 1] + ")";
+        var scaleLabels = [bottom_label, bottom2_label, top2_label, top_label];
+
+        // if (questionObj.reversed) {
+        //     scaleVals = scaleVals.reverse();      
+        //     var bottom_label = "Bottom Box (" + labels[0] + ")";
+        //     var bottom2_label = "Bottom 2 Box (" + labels[0] + "/" + labels[1] + ")";
+        //     var top2_label = "Top 2 Box (" + labels[labels.length - 2] + "/" + labels[labels.length - 1] + ")";
+        //     var top_label = "Top Box (" + labels[labels.length - 1] + ")";
+        // }
+
+        if(questionObj.reversed){
+            log(questionObj.questionName + " (REVERSED)");
+        } else log(questionObj.questionName);
+        log(labels);
+        log(scaleLabels);
+        log(scaleVals);
+        log('------')
+
+        for (var i = 0; i < scaleLabels.length; i++) {
+            questionObj.variables.map(function (v) {
+                duplicatedVars.push(v.duplicate());
+            });
+            lastVar = questionObj.variables[questionObj.variables.length-1];
+            qName = core + " (" + scaleLabels[i] + ")";
+            dataFile.setQuestion(qName, "Pick Any", duplicatedVars);
+            var question = dataFile.getQuestionByName(qName);
+            
+            for (var j = 1; j < labels.length + 1; j++) {
+                setCountThisValueForVariablesInQuestion(question, j, false);
+            }
+            
+            for (var j = 0; j < scaleVals[i].length; j++) {
+                setCountThisValueForVariablesInQuestion(question, scaleVals[i][j], true);                
+            }
+            dataFile.moveAfter(duplicatedVars, lastVar);
+            duplicatedVars = [];
+        }
+    }   
+    
+    if (numeric) {
+        questionObj.variables.map(function (v) {
+            duplicatedVars.push(v.duplicateAs('Numeric'));
+        });
+        lastVar = questionObj.variables[questionObj.variables.length-1];        
+        qName = core + " (" + "MEAN SUMMARY" +")";
+        dataFile.setQuestion(qName, "Number - Multi", duplicatedVars);
+        dataFile.moveAfter(duplicatedVars, lastVar);
+    }
+}
+
+function detectNumeric(questionObj) {
+    var labels = questionObj.labels;
+    labels = labels.filter(x => x !== "Missing data");
+    
+    if (!labels.some(isNaN)) {
+        questionObj.numeric = true;
+    }
+    
+    return questionObj.numeric;
+}
+
+/* Add top/bottom nets */
+function addScaleNets(questionObj) {
+    var labels = questionObj.labels;
+    labels = labels.filter(x => x !== "Missing data");
+    if (questionObj.reversed) {
+        labels = labels.reverse();
+    }
+
+    for (var i = 0; i < questionObj.question.length; i++) {
+        var q = questionObj.question[i];
+
+        var top2_label = "Top 2 Box (" + labels[0] + "/" + labels[1] + ")"; 
+        var bottom2_label = "Bottom 2 Box (" + labels[labels.length - 2] + "/" + labels[labels.length - 1] + ")";
+
+        log(top2_label);
+        log(bottom2_label);
+
+
+        try {
+            q.dataReduction.createNET([labels[0], labels[1]], top2_label);
+            q.dataReduction.moveAfter(top2_label, labels[labels.length-1]);
+            q.dataReduction.createNET([labels[labels.length - 2], labels[labels.length - 1]], bottom2_label);
+            q.dataReduction.moveAfter(bottom2_label, top2_label);
+            // q.dataReduction.createNET([q.valueAttributes.valueLabels(values[0]), q.valueAttributes.valueLabels(values[1])], top2_label);
+            // q.dataReduction.createNET([q.valueAttributes.valueLabels(values[values.length - 2]), q.valueAttributes.valueLabels(values[values.length - 1])], bottom2_label);
+
+            log("SUCCESS");
+        } catch (error) {
+            log("FAILURE");
+            continue;
+        }
+
+        /* Uncomment to move nets at the end of the table */
+        // q.dataReduction.moveAfter(bottom2_label, labels[labels.length - 1]);
+        // q.dataReduction.moveAfter(top2_label, labels[labels.length - 1]);
+    }
+}
+
+/* ----------------------------------------------------- */
+
+/* Get all pick one questions */
+var questions = readQs(getQs(project.dataFiles[0]));
+/* Mark questions as scale */
+var scaleQs = chooseQs(questions, "Please choose scale questions");
+questions.map(i => {
+    if (scaleQs.includes(i)) i.scale = true;
+});
+/* Mark questions that are reversed */
+var reversedQs = chooseQs(scaleQs, "Please choose which scale questions should be reversed");
+reversedQs.map(i => {
+    if (i.scale) reverseScalesOfSelectedData(i);
+});
+
+/* Choose summary tables */
+var loopTables = questions.map(i => {
+    if (i.partOfLoop) return i;
+}).filter(Boolean);
+var sumTables = chooseQs(loopTables, "Please choose questions to create summary tables for");
+
+var basicScale = sumTables.map(i => {
+    if (i.scale) return i;
+}).filter(Boolean);
+
+var numericSums = sumTables.map(i => {
+    if (detectNumeric(i)) return i;
+}).filter(Boolean)
+
+const objsToDeleteSet1 = new Set(basicScale);
+const objsToDeleteSet2 = new Set(numericSums);
+var basicNonScale = sumTables.filter(obj => {
+    return !objsToDeleteSet1.has(obj);
+});
+basicNonScale = basicNonScale.filter(obj => {
+    return !objsToDeleteSet2.has(obj);
+});
+
+
+var dataFile = project.dataFiles[0];
+
+/* Create Summary Tables */
+for (var i = 0; i < basicScale.length; i++) {
+    createSumTable(dataFile, basicScale[i], false, true, false, false, null);
+}
+for (var i = 0; i < numericSums.length; i++) {
+    createSumTable(dataFile, numericSums[i], false, false, true, false, null);
+}
+for (var i = 0; i < basicNonScale.length; i++) {
+    createSumTable(dataFile, basicNonScale[i], true, false, false, false, null);
+}
+
+
+
+// /* Add T2B/B2B nets */
+questions.map(i => {
+    if (i.scale) {
+        log("NET: " + i.questionName);
+        addScaleNets(i);
+        log("-----");
+    }
+})

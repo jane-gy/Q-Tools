@@ -1,0 +1,132 @@
+// Prelimiary Project Setup - Reverse Scales
+// This script will reverse the scales of selected questions.
+// This means that the values will be reversed, so if the value for 'Strongly Agree' is 1 
+// and the value for 'Strongly Disagree' is 5, then the value attributes will be changed 
+// so that the new value for 'Strongly Agree' is 5 and the new value for 'Strongly Disagree' is 1
+// In addition, the data reduction will also be reversed, so that categories at the bottom are
+// moved to the top.
+ 
+includeWeb('QScript Utility Functions');
+includeWeb('QScript Questionnaire Functions');
+includeWeb('QScript Selection Functions');
+includeWeb('QScript Value Attributes Functions');
+includeWeb('QScript Functions to Generate Outputs');
+ 
+// reverseScalesOfSelectedData()
+
+function reverseScalesOfSelectedData(questionObj) {
+    var selected_questions = questionObj.question;
+
+    // Check selected questions for 'Don't Know' categories
+    let dk_check_obj = checkToIncludeQuestionsWithDkInReversal(selected_questions);
+    let include_dk = dk_check_obj.includeDK;
+    let questions_containing_dk = dk_check_obj.questionsContainingDK;
+    let dk_question_names = questions_containing_dk.map(function (q) { return q.name;});
+   
+    // Process selected questions
+    selected_questions.forEach(function (current_question) {
+        let is_dk = dk_question_names.indexOf(current_question.name) > -1;
+        let value_attributes = current_question.valueAttributes;
+
+        // Get all relevant information about all of the unique values
+        let values_object = current_question.uniqueValues.map(function (v) {
+            let current_label = value_attributes.getLabel(v);
+            let exclude_as_dk = (is_dk && !include_dk && isDontKnow(current_label))
+            return { sourceValue: v,
+                     currentValue: value_attributes.getValue(v),
+                     currentLabel: current_label,
+                     keepInSort: !(value_attributes.getIsMissingData(v) || exclude_as_dk),
+                     newValue: null };
+        });
+
+        // Figure out which values need to be recoded and discard the rest
+        values_object = values_object.filter(function (obj) {
+            return obj.keepInSort;
+        });
+
+        // Reverse the values
+        reverseValues(current_question, values_object);
+
+        // Reorder the data reduction according to the recoded values.
+        // This is consistent with Q's default ordering with the smallest value
+        // at the top.
+        rectifyDataReduction(current_question, values_object);
+    });
+
+    questionObj.reversed = true;
+}
+ 
+// This function checks the selected questions for 'Don't Know' categories.
+// If any are found, the user is prompted to continue to to cancel
+// The function returns an object containing an array of the questions with
+// 'Don't know' categories and a flag telling whether the user cancelled or not
+function checkToIncludeQuestionsWithDkInReversal(selected_questions) {
+    let include_dk;
+
+    // Check selected questions for 'Dont Know' options
+    let questions_containing_dk = [];
+    selected_questions.forEach(function (current_question) {
+        var dk_labels = nonMissingValueLabels(current_question).filter(isDontKnow);
+        if (dk_labels.length > 0)
+            questions_containing_dk.push(current_question);
+    });
+ 
+    // Warn user that their questions contain 'Dont Know' options
+    if (questions_containing_dk.length > 0) {
+        const is_displayr = inDisplayr();
+        const structure_name = is_displayr ? "variable sets" : "questions";
+        let dk_message = "Some of the " + structure_name +
+            " that you have selected contain 'Don't Know' categories (for example: ";
+        for (var j = 0; j < Math.min(questions_containing_dk.length, 2); j++) {
+            if (j > 0) {
+                dk_message += ", "
+            }
+            dk_message += questions_containing_dk[j].name;
+        }
+        dk_message += ").\r\nDo you wish to include the 'Don't Know' option in the scale reversal?";
+        include_dk = askYesNo(dk_message);
+    }
+ 
+    return {questionsContainingDK: questions_containing_dk, includeDK: include_dk}
+}
+
+// Having recoded the question, arrange the codes in the table so that they are consistent with the new ordering
+function rectifyDataReduction(question, values_object) {
+    let data_reduction = question.dataReduction;
+    // Sort the values object according to the recoded values (newValue)
+    values_object.sort(function (x,y) {
+        return  x.newValue - y.newValue;
+    });
+
+    // Get the labels that correspond to values (categories). If this is a Pick One - 
+    // Multi question then it can vary between row and column labels depending 
+    // on whether or not the table is transposed.
+    let labels = data_reduction.rowLabels;
+    if (question.questionType == "Pick One - Multi" && data_reduction.transposed)
+        labels = data_reduction.columnLabels;
+    
+
+    // Move the codes around in the table
+    let last_top = null;
+    values_object.forEach(function (obj) {
+        let current_top_source_value = obj.sourceValue;
+        // Find the code whose value matches this and move it after the last code
+        // that was moved.
+        labels.forEach(function (label) {
+            var underlying_values = data_reduction.getUnderlyingValues(label);
+            if (underlying_values.length == 1  && underlying_values[0] == current_top_source_value) {
+                data_reduction.moveAfter(label, last_top);
+                last_top = label;
+            }
+        });
+    });
+}
+
+// Reverse the values in the input question according to the details in
+// values_object. Store the new values for each source value in values_object
+function reverseValues(question, values_object) {
+    for (var j = 0; j < values_object.length; j++) {
+        setValueForVariablesInQuestion(question, values_object[j].sourceValue, values_object[values_object.length - 1 - j].currentValue); 
+        values_object[j].newValue = values_object[values_object.length - 1 - j].currentValue;
+    }
+} 

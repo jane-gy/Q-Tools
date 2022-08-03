@@ -1,0 +1,159 @@
+/**
+* @fileoverview Takes in banner.csv (copied from the tab spec) as input and creates a banner.
+*/
+
+/* 
+* Generate unique ID for each variable 
+*/
+function generateUID() {
+    return Date.now().toString(36) + Math.floor(Math.pow(10, 12) + Math.random() * 9 * Math.pow(10, 12)).toString(36);
+}
+
+/**
+* Creates an array of question objects using input banner.csv
+* @param {bannerT: Array (banner section title), bannerCT: Array (banner title), bannerCQ: Array (banner definition)}
+* @return {Array}
+*/
+function createQuestionObjs(bannerT, bannerCT, bannerCQ) {
+    // Creates a Total variable for the Total column
+    var questionObjs = new Array();
+    questionObjs.push({question: "Total",
+                   variables: ["Total"],
+                   definition: ["Respondent_Status==3"]
+                  });
+    
+    
+    var tempCT = [];
+    var tempCQ = [];
+    const length = bannerT.length;
+    var tempQ = "";
+
+	// Represents a question/banner section. 
+    var obj = {
+        question: "", // Banner section name (e.g., AGE)
+        variables: [], // The banners that represent the banner section (e.g., [18-24, 25-34, 35-54])
+        definition: [] // The banner definitions (e.g., [QAGE(18-24), QAGE(25-34), QAGE(35-54)])
+    }; 
+    for (var i = 0; i < length; i++) {        
+        if (bannerT[i] != "") {
+            if (i > 0) {
+                obj.variables = tempCT;
+                obj.definition = tempCQ;
+                questionObjs.push(obj);
+                
+                tempCT = [];
+                tempCQ = [];
+                var obj = {
+                    question: tempQ,
+                    variables: [],
+                    definition: []
+                };
+            }            
+            
+            tempQ = bannerT[i];
+            obj.question = bannerT[i];
+            tempCT.push(bannerCT[i]);
+            tempCQ.push(bannerCQ[i]);
+        } else {
+            tempCT.push(bannerCT[i]);
+            tempCQ.push(bannerCQ[i]);
+        }
+    }
+    
+    obj.variables = tempCT;
+    obj.definition = tempCQ;
+    questionObjs.push(obj);
+    
+    return questionObjs;
+}
+
+/**
+* Creates a new question in Q
+* @param {mainFile: DataFile object, questionObj: Object (an Object from the list from createQuestionObjs())}
+*/
+function createNewBannerQuestion(mainFile, questionObj) {
+    var variablesNames = questionObj.variables;
+    var definitions = questionObj.definition;
+    var newVars = new Array();
+    
+    // Create variables
+    
+    for(var i = 0; i < variablesNames.length; i++) {
+		var varName = generateUID();
+        newVars.push(varName);
+
+        var definition = definitions[i];
+        var jsScript = `
+        if (${definition}) 1;
+        else 0;
+        `;
+        mainFile.newJavaScriptVariable(jsScript, false, varName, variablesNames[i], null, {skipValidation:true,acceleration:true});
+    }
+    
+    // Set up variables
+    var variables = new Array();
+    for(var i = 0; i < variablesNames.length; i++) {
+        variables.push(mainFile.getVariableByName(newVars[i]));
+    }
+    
+    // Combine variables to form a question
+    mainFile.setQuestion(questionObj.question, "Pick Any", variables);
+}
+
+    
+/**
+* Creates a banner in Q
+* @param {bannerName: string, questionNames: Array}
+*/
+function createBanner(bannerName, questionNames) {
+    mainFile.createBanner(bannerName, questionNames, false, false, true);
+}
+    
+
+// Asks for file input. Comment below line out if the script has already been ran and banner.csv loaded to Q. 
+var bannerFile = project.addDataFileDialog("Select the banner CSV File");
+// Uncomment below line if banner.csv already loaded to Q.
+// var bannerFile = project.dataFiles[1];
+
+// Reading in banner.csv. Each column becomes an array (bannerT, bannerCT, bannerCQ)
+var mainFile = project.dataFiles[0];
+var filesVars = bannerFile.variables;
+var bannerData = filesVars.map(function(v) {
+    return v.rawValues;
+});
+var bannerT = bannerData[0];
+var bannerCT = bannerData[1];
+var bannerCQ = bannerData[2];
+
+var questionObjs = createQuestionObjs(bannerT, bannerCT, bannerCQ);
+var errors = new Array();
+
+questionObjs.map(function (obj) {
+    try {
+        createNewBannerQuestion(project.dataFiles[0], obj);
+    }
+    catch (Error) {
+        errors.push(Error.message);
+    }
+});
+
+var bannerQuestion = new Array();
+var questionNames = questionObjs.map(obj => {
+    return obj.question;
+});
+questionNames.map(function (qName) {
+    bannerQuestion.push([mainFile.getQuestionByName(qName)]);
+});
+
+try {
+    createBanner(prompt("What would you like to name your banner? "), bannerQuestion);
+}
+catch (Error) {
+    alert(Error.message);
+}
+
+/** Next steps:
+1. Dealing with multiple banners?
+	- Append every variable name and question name with the banner name (e.g., a_18_24_ban1)
+	- Ask for banner name input (e.g., createBanner(banName, bannerQuestion)) instead of putting just 'BANNER' in the script
+*/
