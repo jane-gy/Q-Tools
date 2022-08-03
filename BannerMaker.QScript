@@ -151,9 +151,3 @@ try {
 catch (Error) {
     alert(Error.message);
 }
-
-/** Next steps:
-1. Dealing with multiple banners?
-	- Append every variable name and question name with the banner name (e.g., a_18_24_ban1)
-	- Ask for banner name input (e.g., createBanner(banName, bannerQuestion)) instead of putting just 'BANNER' in the script
-*/
