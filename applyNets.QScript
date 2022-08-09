@@ -1,0 +1,23 @@
+includeWeb("Table JavaScript Utility Functions");
+includeWeb('QScript Value Attributes Functions');
+
+var proj = project.dataFiles[0];
+
+
+/*
+var list = ["QHORSERACEr1: HBO", "QHORSERACEr2: HBO Max", "QHORSERACEr3: Warner Brothers", "QHORSERACEr4: Netflix", "QHORSERACEr5: Amazon Prime Video", "QHORSERACEr6: Hulu", "QHORSERACEr7: Paramount+", "QHORSERACEr8: Disney+", "QHORSERACEr9: Apple TV+", "QHORSERACEr10: Peacock", "QHORSERACEr11: discovery+", "QHORSERACEr12: Discovery Channel", "QHORSERACEr13: Showtime"];
+
+list.forEach(x => {
+    var q = proj.getQuestionsByName(x)[0];	
+
+	q.dataReduction.createNET([0,1,2], "Top 3 Box");
+	q.dataReduction.moveAfter("Top 2 Box (Much more likely to watch/Somewhat more likely to watch)", "Much less likely to watch");
+});
+*/
+
+var qName = "QNONGAMER_LAPSED";
+var q = proj.getQuestionsByName(qName)[0];
+q.dataReduction.createNET([1,2], "NET: Don't currently play games, but used to." );
+var labels = valueLabels(q);
+var lastLabel = labels[labels.length - 1];
+q.dataReduction.moveAfter("NET: Don't currently play games, but used to.", lastLabel);
