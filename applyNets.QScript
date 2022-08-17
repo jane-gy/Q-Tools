@@ -1,23 +1,31 @@
 includeWeb("Table JavaScript Utility Functions");
+includeWeb('QScript Utility Functions');
 includeWeb('QScript Value Attributes Functions');
 
+
 var proj = project.dataFiles[0];
+var pickOnes = getAllQuestionsByTypes([proj], ["Pick One"]);
 
 
-/*
-var list = ["QHORSERACEr1: HBO", "QHORSERACEr2: HBO Max", "QHORSERACEr3: Warner Brothers", "QHORSERACEr4: Netflix", "QHORSERACEr5: Amazon Prime Video", "QHORSERACEr6: Hulu", "QHORSERACEr7: Paramount+", "QHORSERACEr8: Disney+", "QHORSERACEr9: Apple TV+", "QHORSERACEr10: Peacock", "QHORSERACEr11: discovery+", "QHORSERACEr12: Discovery Channel", "QHORSERACEr13: Showtime"];
-
-list.forEach(x => {
-    var q = proj.getQuestionsByName(x)[0];	
-
-	q.dataReduction.createNET([0,1,2], "Top 3 Box");
-	q.dataReduction.moveAfter("Top 2 Box (Much more likely to watch/Somewhat more likely to watch)", "Much less likely to watch");
+// var list = ["QHORSERACEr1: HBO", "QHORSERACEr2: HBO Max", "QHORSERACEr3: Warner Brothers", "QHORSERACEr4: Netflix", "QHORSERACEr5: Amazon Prime Video", "QHORSERACEr6: Hulu", "QHORSERACEr7: Paramount+", "QHORSERACEr8: Disney+", "QHORSERACEr9: Apple TV+", "QHORSERACEr10: Peacock", "QHORSERACEr11: discovery+", "QHORSERACEr12: Discovery Channel", "QHORSERACEr13: Showtime"];
+var qtaskease = "QTASKEASE"
+var regex = new RegExp("^" + qtaskease + ".*", "g");
+var list = pickOnes.filter(q => {
+	return regex.test(q.name);
 });
-*/
 
-var qName = "QNONGAMER_LAPSED";
-var q = proj.getQuestionsByName(qName)[0];
-q.dataReduction.createNET([1,2], "NET: Don't currently play games, but used to." );
-var labels = valueLabels(q);
-var lastLabel = labels[labels.length - 1];
-q.dataReduction.moveAfter("NET: Don't currently play games, but used to.", lastLabel);
+// list.forEach(x => {
+//     var q = x;	
+
+// 	q.dataReduction.hide("Top 2 Box (I’ve never done this/Extremely easy)");
+// 	q.dataReduction.createNET([1,2], "Top 2 Box (Extremely easy/Somewhat easy)");
+// 	q.dataReduction.moveAfter("Top 2 Box (Extremely easy/Somewhat easy)", "Extremely difficult");
+// 	q.dataReduction.moveAfter("I’ve never done this", "Extremely difficult")
+// });
+
+// var qName = "QNONGAMER_LAPSED";
+// var q = proj.getQuestionsByName(qName)[0];
+// q.dataReduction.createNET([1,2], "NET: Don't currently play games, but used to." );
+// var labels = valueLabels(q);
+// var lastLabel = labels[labels.length - 1];
+// q.dataReduction.moveAfter("NET: Don't currently play games, but used to.", lastLabel);
