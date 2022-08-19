@@ -2,7 +2,7 @@ includeWeb('QScript Selection Functions');
 includeWeb('QScript Questionnaire Functions');
 includeWeb('QScript Utility Functions');
 includeWeb('QScript Value Attributes Functions');
-includeFile('Questions.QScript')
+includeFile('Question.QScript')
 includeFile('ReverseScales.QScript')
 
 function getQs(dataFile) {
@@ -135,18 +135,22 @@ function chooseQs(questionObjs, prompt) {
     return selectedTables;
 }
 
-/* Create sum tables and returns an array of sum table question names */
+/**
+ * Create sum tables and returns an array of sum table question names 
+ * Note: custom and customVals for custom summary tables. custom is a boolean and customVals is a list, [list of customVals, list of variables needed for summary tabs, list of labels for the summary tabs, core name].
+ */
 function createSumTable(dataFile, questionObj, nonscale, scale, numeric, custom, customVals) {
     var duplicatedVars = [];
     var qName = '';
-    var labels = questionObj.labels;
-    labels = labels.filter(x => x !== "Missing data");
+    if (questionObj != null) {    
+        var labels = questionObj.labels;
+        labels = labels.filter(x => x !== "Missing data");
+        var core = questionObj.questionName;
+    }
+
     var length = 0;
     var scaleVals = []
-    
-    var core = questionObj.questionName;
     var length = 0;
-    
     
     if (nonscale && !numeric) {
         for (var i = 0; i < labels.length; i++) {
@@ -231,6 +235,34 @@ function createSumTable(dataFile, questionObj, nonscale, scale, numeric, custom,
         dataFile.setQuestion(qName, "Number - Multi", duplicatedVars);
         dataFile.moveAfter(duplicatedVars, lastVar);
     }
+
+    if (custom) {
+        var values = customVals[0];
+        var sVars = customVals[1];
+        var sLabels = customVals[2];
+        var core = customVals[3];
+
+        for (var i = 0; i < values.length; i++) {
+            sVars.map(function (v) {
+                duplicatedVars.push(v.duplicate());
+            });
+            lastVar = sVars[sVars.length-1];
+            qName = core + " (" + sLabels[i] + ")";
+            dataFile.setQuestion(qName, "Pick Any", duplicatedVars);
+            var question = dataFile.getQuestionByName(qName);
+
+            for (var j = 1; j < sLabels.length + 1; j++) {
+                setCountThisValueForVariablesInQuestion(question, j, false);
+            }
+            
+            for (var j = 0; j < values[i].length; j++) {
+                setCountThisValueForVariablesInQuestion(question, values[i][j], true);                
+            }
+
+            dataFile.moveAfter(duplicatedVars, lastVar);
+            duplicatedVars = [];
+        }
+    }
 }
 
 function detectNumeric(questionObj) {
@@ -281,66 +313,3 @@ function addScaleNets(questionObj) {
         // q.dataReduction.moveAfter(top2_label, labels[labels.length - 1]);
     }
 }
-
-/* ----------------------------------------------------- */
-
-/* Get all pick one questions */
-var questions = readQs(getQs(project.dataFiles[0]));
-/* Mark questions as scale */
-var scaleQs = chooseQs(questions, "Please choose scale questions");
-questions.map(i => {
-    if (scaleQs.includes(i)) i.scale = true;
-});
-/* Mark questions that are reversed */
-var reversedQs = chooseQs(scaleQs, "Please choose which scale questions should be reversed");
-reversedQs.map(i => {
-    if (i.scale) reverseScalesOfSelectedData(i);
-});
-
-/* Choose summary tables */
-var loopTables = questions.map(i => {
-    if (i.partOfLoop) return i;
-}).filter(Boolean);
-var sumTables = chooseQs(loopTables, "Please choose questions to create summary tables for");
-
-var basicScale = sumTables.map(i => {
-    if (i.scale) return i;
-}).filter(Boolean);
-
-var numericSums = sumTables.map(i => {
-    if (detectNumeric(i)) return i;
-}).filter(Boolean)
-
-const objsToDeleteSet1 = new Set(basicScale);
-const objsToDeleteSet2 = new Set(numericSums);
-var basicNonScale = sumTables.filter(obj => {
-    return !objsToDeleteSet1.has(obj);
-});
-basicNonScale = basicNonScale.filter(obj => {
-    return !objsToDeleteSet2.has(obj);
-});
-
-
-var dataFile = project.dataFiles[0];
-
-/* Create Summary Tables */
-for (var i = 0; i < basicScale.length; i++) {
-    createSumTable(dataFile, basicScale[i], false, true, false, false, null);
-}
-for (var i = 0; i < numericSums.length; i++) {
-    createSumTable(dataFile, numericSums[i], false, false, true, false, null);
-}
-for (var i = 0; i < basicNonScale.length; i++) {
-    createSumTable(dataFile, basicNonScale[i], true, false, false, false, null);
-}
-
-
-
-// /* Add T2B/B2B nets */
-questions.map(i => {
-    if (i.scale) {
-        log("NET: " + i.questionName);
-        addScaleNets(i);
-        log("-----");
-    }
-})

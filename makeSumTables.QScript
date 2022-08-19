@@ -1,0 +1,33 @@
+/**
+ * Custom summary tables maker
+ */
+ includeWeb('QScript Utility Functions');
+ includeFile('SummaryTables.QScript');
+
+var dataFile = project.dataFiles[0];
+var pickOnes = getAllQuestionsByTypes([dataFile], ["Pick One"]);
+
+qsForSum = ['QNETFITNEW_'];
+sumAllVars = {};
+
+for (var i=0; i < qsForSum.length; i++) {
+    var regex = new RegExp('^' + qsForSum[i] + '.*', 'g');
+
+    var matches = pickOnes.filter(q => {
+        return regex.test(q.name);
+    });
+
+    matches = matches.map(q => {
+        return getVariablesFromQuestions([q]);
+    });
+    
+    sumAllVars[qsForSum[i]] = matches.flat();
+}
+
+var customVals = [[0],[0,1],[2,3],[3]];
+var labels = ["Top Box (Very consistent)", "Top 2 Box (Very consistent/Somewhat consistent)", "Bottom 2 Box (Not at all consistent/Not sure)", "Bottom Box (Not sure)"];
+
+qsForSum.map(q => {
+    var custom = [customVals, sumAllVars[q], labels, q];
+    createSumTable(dataFile,null, false, false, false, true, custom);
+});

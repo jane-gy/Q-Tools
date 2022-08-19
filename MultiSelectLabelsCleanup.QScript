@@ -12,14 +12,14 @@ var pickOnes = getAllQuestionsByTypes([mainFile], ["Pick One", "Pick One - Multi
 var reg_r = /(.*)r(\\d+):/gim;
 for (var i = 0; i < pickOnes.length; i++) {
     var q = pickOnes[i];
-    var cleanLabel = q.name.replace(reg_r, '$1_\$2:');
+    var cleanLabel = q.name.replace(reg_r, '\$1_\$2:');
     q.name = cleanLabel
 }
 
 // Clean up variable names for mulit-selects
-for(var i = 0; i < variables.length; i++) {
-    const regex = /^([A-Za-z_0-9)()]+: .*?) -? (.*)/gim;
-    var cleanLabel = variables[i].label.replace(regex, '\$1');
-    log(cleanLabel);
-    variables[i].label = cleanLabel;
-}
+// for(var i = 0; i < variables.length; i++) {
+//     const regex = /^([A-Za-z_0-9)()]+: .*?)\s*-?\s*(.*)/gim;
+//     var cleanLabel = variables[i].label.replace(regex, '\$1');
+//     log(cleanLabel);
+//     variables[i].label = cleanLabel;
+// } 

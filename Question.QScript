@@ -1,0 +1,13 @@
+class PickOneQ {
+    constructor(questionName, questionLabel) {
+        this.questionName = questionName;
+        this.questionLabel = questionLabel;
+        this.question = [];
+        this.variables = [];
+        this.labels = [];
+        this.partOfLoop = false;
+        this.scale = false;
+        this.numeric = false;
+        this.reversed = false;
+    }
+}
