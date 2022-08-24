@@ -1,0 +1,23 @@
+Option Explicit
+
+Private Sub Worksheet_SelectionChange(ByVal Target As Excel.Range)
+
+If (ActiveCell.Offset(1, 0).End(xlToLeft).Value = "Base: Unweighted") And ActiveCell.Value <> "" Then
+Dim keyRng As Range
+Set keyRng = ActiveCell
+Dim rng1 As Range
+
+Set rng1 = Range(ActiveCell.Offset(3, 0), ActiveCell.Offset(3, 0).End(xlDown))
+rng1.EntireRow.Select
+With Selection
+.Replace what:="-", replacement:="0", lookat:=xlWhole
+.Replace what:="~*", replacement:=".001", lookat:=xlWhole
+.Sort Key1:=keyRng.Offset(3, 0), _
+        Order1:=xlDescending, DataOption1:=xlSortTextAsNumbers
+.Replace what:="0", replacement:="-", lookat:=xlWhole
+.Replace what:="0.001", replacement:="*", lookat:=xlWhole
+End With
+
+End If
+
+End Sub
