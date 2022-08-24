@@ -1,3 +1,7 @@
+/** 
+ * applyNets 
+ * **/
+
 includeWeb("Table JavaScript Utility Functions");
 includeWeb('QScript Utility Functions');
 includeWeb('QScript Value Attributes Functions');
