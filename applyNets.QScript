@@ -7,22 +7,28 @@ var proj = project.dataFiles[0];
 var pickOnes = getAllQuestionsByTypes([proj], ["Pick One"]);
 
 
-// var list = ["QHORSERACEr1: HBO", "QHORSERACEr2: HBO Max", "QHORSERACEr3: Warner Brothers", "QHORSERACEr4: Netflix", "QHORSERACEr5: Amazon Prime Video", "QHORSERACEr6: Hulu", "QHORSERACEr7: Paramount+", "QHORSERACEr8: Disney+", "QHORSERACEr9: Apple TV+", "QHORSERACEr10: Peacock", "QHORSERACEr11: discovery+", "QHORSERACEr12: Discovery Channel", "QHORSERACEr13: Showtime"];
-var qName = "QNETFITNEW_"
-var regex = new RegExp("^" + qName + ".*", "g");
+var qName = "QGENREINTEREST"
+var regex = new RegExp("^" + qName + ".*");
 var list = pickOnes.filter(q => {
 	return regex.test(q.name);
 });
 
+log(list)
+
 list.forEach(x => {
     var q = x;	
 
-	// q.dataReduction.hide("Top 2 Box (I’ve never done this/Extremely easy)");
-	q.dataReduction.createNET([0,1], "Top 2 Box (Very consistent/Somewhat consistent)");
-	q.dataReduction.moveAfter("Top 2 Box (Very consistent/Somewhat consistent)", "Not sure");
+	try {
+		q.dataReduction.hide("Top 2 Box (Often/Sometimes)");
+		q.dataReduction.hide("Bottom 2 Box (Rarely/Never)");
+	} catch(e) {
+	}
 
-	q.dataReduction.createNET([2,3], "Bottom 2 Box (Not at all consistent/Not sure)");
-	q.dataReduction.moveAfter("Bottom 2 Box (Not at all consistent/Not sure)", "Top 2 Box (Very consistent/Somewhat consistent)");
+	q.dataReduction.createNET([0,1], "Top 2 Box (Often/Sometimes)");
+	q.dataReduction.moveAfter("Top 2 Box (Often/Sometimes)", "Never");
+
+	q.dataReduction.createNET([2,3], "Bottom 2 Box (Rarely/Never)");
+	q.dataReduction.moveAfter("Bottom 2 Box (Rarely/Never)", "Top 2 Box (Often/Sometimes)");
 
 });
 
