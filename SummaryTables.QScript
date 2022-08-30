@@ -156,9 +156,9 @@ function createSumTable(dataFile, questionObj, nonscale, scale, numeric, custom,
         for (var i = 0; i < labels.length; i++) {
             questionObj.variables.map(function (v) {
                 duplicatedVars.push(v.duplicate());
+                qName = core + " (" + labels[i] + ")";
             });
             lastVar = questionObj.variables[questionObj.variables.length-1];
-            qName = core + " (" + labels[i] + ")";
             dataFile.setQuestion(qName, "Pick Any", duplicatedVars);
             var question = dataFile.getQuestionByName(qName);
 

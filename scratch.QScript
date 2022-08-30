@@ -1,0 +1,5 @@
+includeFile('applyNets.QScript')
+
+dataFile = project.dataFiles[0]
+
+createNetAll(dataFile, "QGENREINTEREST_", [2,3], "Top 2 Box TEST");
