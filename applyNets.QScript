@@ -1,44 +1,67 @@
 /** 
- * applyNets 
+ * @fileoverview Contains functions to create nets for multiple/individual tables.
  * **/
 
-includeWeb("Table JavaScript Utility Functions");
+includeWeb('Table JavaScript Utility Functions');
 includeWeb('QScript Utility Functions');
 includeWeb('QScript Value Attributes Functions');
 
+/**
+ * Creates nets for multiple questions at once. Nets are always placed at the bottom of the table.
+ * Example usage: To create a Top 2 Box for all QGENREr1-QGENREr12 tables, call createNetAll(dataFile, "QGENREr", [0,1], "Top 2 Box") 
+ * @param {DataFile} dataFile A DataFile object
+ * @param {String} qName The core name of the questions new net should be applied to
+ * @param {Array} values Array of values pointing to the position of the choices. This array will determine what choices to net.
+ * @param {String} label Label of the new net
+ * @param {String=} hidden Label of old net to hide/remove
+ */
+function createNetAll(dataFile, qName, values, label, hidden=null) {
+	var pickOnes = getAllQuestionsByTypes([dataFile], ["Pick One"]);
+	var regex = new RegExp("^" + qName + ".*");
+	var list = pickOnes.filter(q => {
+		return regex.test(q.name);
+	});
 
-var proj = project.dataFiles[0];
-var pickOnes = getAllQuestionsByTypes([proj], ["Pick One"]);
+	list.forEach(x => {
+		var q = x;
+
+		getNet(q, values, label, hidden);
+	});
+}
 
 
-var qName = "QGENREINTEREST"
-var regex = new RegExp("^" + qName + ".*");
-var list = pickOnes.filter(q => {
-	return regex.test(q.name);
-});
+/**
+ * Creates a net for a single question. Net is always placed at the bottom of the table.
+ * Example usage: To create a Top 2 Box for QUNIQUE, call createNet(dataFile, "QUNIQUE", [0,1], "Top 2 Box") 
+ * @param {DataFile} dataFile A datafile object
+ * @param {String} qName The name of the question new net should be applied to
+ * @param {Array} values Array of values pointing to the position of the choices. This array will determine what choices to net.
+ * @param {String} label Label of the new net
+ * @param {String=} hidden Label of old net to hide/remove
+ */
+ function createNet(dataFile, qName, values, label, hidden=null) {
+	var q = dataFile.getQuestionsByName(qName)[0];
 
-log(list)
+	getNet(q, values, label, hidden);
+}
 
-list.forEach(x => {
-    var q = x;	
 
-	try {
-		q.dataReduction.hide("Top 2 Box (Often/Sometimes)");
-		q.dataReduction.hide("Bottom 2 Box (Rarely/Never)");
-	} catch(e) {
+/**
+ * Helper function for for createNet() and createNetAll().
+ * @param {Question} q A Question object
+ * @param {Array} values Array of values pointing to the position of the choices. This array will determine what choices to net.
+ * @param {String} label Label of the new net
+ * @param {String=} hidden Label of old net to hide/remove
+ */
+function getNet(q, values, label, hidden=null) {
+	if (hidden != null) {
+		q.dataReduction.hide(hidden)
 	}
 
-	q.dataReduction.createNET([0,1], "Top 2 Box (Often/Sometimes)");
-	q.dataReduction.moveAfter("Top 2 Box (Often/Sometimes)", "Never");
+	q.dataReduction.createNET(values, label);
 
-	q.dataReduction.createNET([2,3], "Bottom 2 Box (Rarely/Never)");
-	q.dataReduction.moveAfter("Bottom 2 Box (Rarely/Never)", "Top 2 Box (Often/Sometimes)");
-
-});
-
-// var qName = "QNONGAMER_LAPSED";
-// var q = proj.getQuestionsByName(qName)[0];
-// q.dataReduction.createNET([1,2], "NET: Don't currently play games, but used to." );
-// var labels = valueLabels(q);
-// var lastLabel = labels[labels.length - 1];
-// q.dataReduction.moveAfter("NET: Don't currently play games, but used to.", lastLabel);
+	var labels = valueLabels(q);
+	var lastLabel = labels[labels.length - 1];
+	
+	q.dataReduction.moveAfter(label, lastLabel);
+}
