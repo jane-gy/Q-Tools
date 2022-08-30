@@ -47,7 +47,7 @@ function createNetAll(dataFile, qName, values, label, hidden=null) {
 
 
 /**
- * Helper function for for createNet() and createNetAll().
+ * Helper function for createNet() and createNetAll().
  * @param {Question} q A Question object
  * @param {Array} values Array of values pointing to the position of the choices. This array will determine what choices to net.
  * @param {String} label Label of the new net
@@ -55,7 +55,9 @@ function createNetAll(dataFile, qName, values, label, hidden=null) {
  */
 function getNet(q, values, label, hidden=null) {
 	if (hidden != null) {
-		q.dataReduction.hide(hidden)
+		try {
+			q.dataReduction.hide(hidden)
+		} catch (e) {}
 	}
 
 	q.dataReduction.createNET(values, label);
