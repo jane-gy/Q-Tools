@@ -16,10 +16,10 @@ for (var i = 0; i < pickOnes.length; i++) {
     q.name = cleanLabel
 }
 
-// Clean up variable names for mulit-selects
-// for(var i = 0; i < variables.length; i++) {
-//     const regex = /^([A-Za-z_0-9)()]+: .*?)\s*-?\s*(.*)/gim;
-//     var cleanLabel = variables[i].label.replace(regex, '\$1');
-//     log(cleanLabel);
-//     variables[i].label = cleanLabel;
-// } 
+Clean up variable names for mulit-selects
+for(var i = 0; i < variables.length; i++) {
+    const regex = /^([A-Za-z_0-9)()]+: .*?)\s*-?\s*(.*)/gim;
+    var cleanLabel = variables[i].label.replace(regex, '\$1');
+    log(cleanLabel);
+    variables[i].label = cleanLabel;
+} 
