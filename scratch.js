@@ -1,4 +1,5 @@
-includeFile('Nets.QScript')
+includeFile('Nets.QScript');
+includeFile('Reverse.QScript');
 
 dataFile = project.dataFiles[0]
 
@@ -11,9 +12,17 @@ dataFile = project.dataFiles[0]
 // 	createNet(dataFile, list[i] , [0,1], "net", "hidethis")
 // }
 
-var q = dataFile.getQuestionsByName('QFEATURES_MOSTEXCITEDr')
-q.forEach(x => {
-	var i = x;
+// var q = dataFile.getQuestionsByName('QFEATURES_MOSTEXCITEDr')
+// q.forEach(x => {
+// 	var i = x;
 
-	i.dataReduction.moveAfter("Missing data", "RANK 3");
-})
+// 	i.dataReduction.moveAfter("Missing data", "RANK 3");
+// })
+
+// var questions = dataFile.getQuestionsByName('QRESOURCES_SATr');
+
+// questions.forEach(q => {
+// 	reverseScale(q);
+// });
+
+log(__dirname);

@@ -25,7 +25,7 @@ function createNetAll(dataFile, qName, values, label, hidden=null) {
 	list.forEach(x => {
 		var q = x;
 
-		getNet(q, values, label, hidden);
+		makeNet(q, values, label, hidden);
 	});
 }
 
@@ -42,7 +42,7 @@ function createNetAll(dataFile, qName, values, label, hidden=null) {
  function createNet(dataFile, qName, values, label, hidden=null) {
 	var q = dataFile.getQuestionsByName(qName)[0];
 
-	getNet(q, values, label, hidden);
+	makeNet(q, values, label, hidden);
 }
 
 
@@ -53,7 +53,7 @@ function createNetAll(dataFile, qName, values, label, hidden=null) {
  * @param {String} label Label of the new net
  * @param {String=} hidden Label of old net to hide/remove
  */
-function getNet(q, values, label, hidden=null) {
+function makeNet(q, values, label, hidden=null) {
 	if (hidden != null) {
 		try {
 			q.dataReduction.hide(hidden)

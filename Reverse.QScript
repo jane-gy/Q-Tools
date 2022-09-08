@@ -1,0 +1,26 @@
+/**
+ * @fileoverview Reverse scales (position ONLY)
+ */
+
+ includeWeb('QScript Utility Functions');
+ includeWeb('QScript Value Attributes Functions');
+
+/**
+ * Reverses scales.
+ * @param {Question} q A Question object
+ * @param {Array=} skip Array of string label(s) to skip (i.e., "Don't know", "Other")
+ */
+function reverseScale(q, skip=null) {
+    var labels = valueLabels(q);
+    labels = labels.filter(x => x !== "Missing data");
+    
+    if (skip != null) {
+        skip.forEach(skipLabel => {
+            labels = labels.filter(x => x !== skipLabel)
+        });
+    }
+
+    for(var i = 0; i < labels.length; i++) {
+        q.dataReduction.moveAfter(labels[i], null);
+    }
+}
