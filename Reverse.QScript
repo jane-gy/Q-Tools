@@ -13,7 +13,7 @@
 function reverseScale(q, skip=null) {
     var labels = valueLabels(q);
     labels = labels.filter(x => x !== "Missing data");
-    
+
     if (skip != null) {
         skip.forEach(skipLabel => {
             labels = labels.filter(x => x !== skipLabel)

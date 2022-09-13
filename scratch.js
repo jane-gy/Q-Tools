@@ -1,7 +1,27 @@
 includeFile('Nets.QScript');
 includeFile('Reverse.QScript');
 
-dataFile = project.dataFiles[0]
+var dataFile = project.dataFiles[0];
+var pickOnes = getAllQuestionsByTypes([dataFile], ["Pick One"]);
+// var qName = dataFile.getQuestionsByName("QGFE_INITIALIMPRESSIONr1")[0]
+// log(typeof(qName))
+// qName.dataReduction.rowLabels.forEach(element => {
+//     log(element)
+// });
+for (var i = 0; i < pickOnes.length; i++) {
+    var hideNet = false;
+    var labels = pickOnes[i].dataReduction.rowLabels
+    labels.forEach(label => {
+        if (/Top 2 Box .*/.test(label)) hideNet = true;
+    });
+
+    if (hideNet) {
+        topLabel = labels[labels.length-3];
+        bottomLabel = labels[labels.length-2];
+        pickOnes[i].dataReduction.hide(topLabel);
+        pickOnes[i].dataReduction.hide(bottomLabel);
+    }
+}
 
 // // Useful for set of questions with the same core name.
 // createNetAll(dataFile, "QGENREINTEREST_", [2,3], "Top 2 Box (Sometimes/Often)", hidden="INCORRECT NET");
@@ -24,5 +44,3 @@ dataFile = project.dataFiles[0]
 // questions.forEach(q => {
 // 	reverseScale(q);
 // });
-
-log(__dirname);

@@ -3,7 +3,7 @@ includeWeb('QScript Questionnaire Functions');
 includeWeb('QScript Utility Functions');
 includeWeb('QScript Value Attributes Functions');
 includeFile('Question.QScript')
-includeFile('ReverseScales.QScript')
+includeFile('Reverse.QScript')
 
 function getQs(dataFile) {
     var pickOnes = getAllQuestionsByTypes([dataFile], ["Pick One", "Pick One - Multi"]);
@@ -179,23 +179,22 @@ function createSumTable(dataFile, questionObj, nonscale, scale, numeric, custom,
         length = labels.length;
         scaleVals = [[length], [length-1, length], [1, 2], [1]];
         if (questionObj.reversed) {
-            labels = labels.reverse();
+            // labels = labels.reverse();
             scaleVals = scaleVals.reverse();
+            var top_label = "Top Box (" + labels[labels.length - 1] + ")";
+            var top2_label = "Top 2 Box (" + labels[labels.length - 2] + "+" + labels[labels.length - 1] + ")";
+            var bottom_label = "Bottom Box (" + labels[0] + ")";
+            var bottom2_label = "Bottom 2 Box (" + labels[0] + "+" + labels[1] + ")";
+            var scaleLabels = [bottom_label, bottom2_label, top2_label, top_label];
+    
+        } else {
+            var top_label = "Top Box (" + labels[0] + ")";
+            var top2_label = "Top 2 Box (" + labels[0] + "+" + labels[1] + ")";
+            var bottom2_label = "Bottom 2 Box (" + labels[labels.length - 2] + "+" + labels[labels.length - 1] + ")";
+            var bottom_label = "Bottom Box (" + labels[labels.length - 1] + ")";
+            var scaleLabels = [bottom_label, bottom2_label, top2_label, top_label];
         }
 
-        var top_label = "Top Box (" + labels[0] + ")";
-        var top2_label = "Top 2 Box (" + labels[0] + "/" + labels[1] + ")";
-        var bottom2_label = "Bottom 2 Box (" + labels[labels.length - 2] + "/" + labels[labels.length - 1] + ")";
-        var bottom_label = "Bottom Box (" + labels[labels.length - 1] + ")";
-        var scaleLabels = [bottom_label, bottom2_label, top2_label, top_label];
-
-        // if (questionObj.reversed) {
-        //     scaleVals = scaleVals.reverse();      
-        //     var bottom_label = "Bottom Box (" + labels[0] + ")";
-        //     var bottom2_label = "Bottom 2 Box (" + labels[0] + "/" + labels[1] + ")";
-        //     var top2_label = "Top 2 Box (" + labels[labels.length - 2] + "/" + labels[labels.length - 1] + ")";
-        //     var top_label = "Top Box (" + labels[labels.length - 1] + ")";
-        // }
 
         if(questionObj.reversed){
             log(questionObj.questionName + " (REVERSED)");
@@ -280,25 +279,44 @@ function detectNumeric(questionObj) {
 function addScaleNets(questionObj) {
     var labels = questionObj.labels;
     labels = labels.filter(x => x !== "Missing data");
-    if (questionObj.reversed) {
-        labels = labels.reverse();
-    }
+    // if (questionObj.reversed) {
+    //     labels = labels.reverse();
+    // }
 
     for (var i = 0; i < questionObj.question.length; i++) {
         var q = questionObj.question[i];
 
-        var top2_label = "Top 2 Box (" + labels[0] + "/" + labels[1] + ")"; 
-        var bottom2_label = "Bottom 2 Box (" + labels[labels.length - 2] + "/" + labels[labels.length - 1] + ")";
+        if (questionObj.reversed) {
+            var top2_label = "Top 2 Box (" + labels[labels.length - 2] + "+" + labels[labels.length - 1] + ")";
+            var bottom2_label = "Bottom 2 Box (" + labels[0] + "+" + labels[1] + ")"; 
+        } else {
+            var top2_label = "Top 2 Box (" + labels[0] + "+" + labels[1] + ")"; 
+            var bottom2_label = "Bottom 2 Box (" + labels[labels.length - 2] + "+" + labels[labels.length - 1] + ")";
+        }
 
-        log(top2_label);
-        log(bottom2_label);
+        // var top2_label = "Top 2 Box (" + labels[0] + "+" + labels[1] + ")"; 
+        // var bottom2_label = "Bottom 2 Box (" + labels[labels.length - 2] + "+" + labels[labels.length - 1] + ")";
+        // log(top2_label);
+        // log(bottom2_label);
 
 
         try {
-            q.dataReduction.createNET([labels[0], labels[1]], top2_label);
-            q.dataReduction.moveAfter(top2_label, labels[labels.length-1]);
-            q.dataReduction.createNET([labels[labels.length - 2], labels[labels.length - 1]], bottom2_label);
+            var rowLabs = q.dataReduction.rowLabels
+            var lastLabel = rowLabs[labels.length - 1];
+
+            q.dataReduction.createNET([0,1], top2_label);
+            q.dataReduction.moveAfter(top2_label, lastLabel);
+
+            q.dataReduction.createNET([labels.length - 2, labels.length - 1], bottom2_label);
             q.dataReduction.moveAfter(bottom2_label, top2_label);
+
+
+
+            // q.dataReduction.createNET([labels[0], labels[1]], top2_label);
+            // q.dataReduction.moveAfter(top2_label, labels[labels.length-1]);
+            // q.dataReduction.createNET([labels[labels.length - 2], labels[labels.length - 1]], bottom2_label);
+            // q.dataReduction.moveAfter(bottom2_label, top2_label);
+
             // q.dataReduction.createNET([q.valueAttributes.valueLabels(values[0]), q.valueAttributes.valueLabels(values[1])], top2_label);
             // q.dataReduction.createNET([q.valueAttributes.valueLabels(values[values.length - 2]), q.valueAttributes.valueLabels(values[values.length - 1])], bottom2_label);
 

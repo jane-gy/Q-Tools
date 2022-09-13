@@ -1,4 +1,5 @@
 includeFile('SummaryTables.QScript');
+includeFile('Reverse.QScript');
 
 /* ----------------------------------------------------- */
 
@@ -11,9 +12,14 @@ questions.map(i => {
 });
 /* Mark questions that are reversed */
 var reversedQs = chooseQs(scaleQs, "Please choose which scale questions should be reversed");
-reversedQs.map(i => {
-    if (i.scale) reverseScalesOfSelectedData(i);
-});
+for (var i = 0; i < reversedQs.length; i++) {
+    var qs = reversedQs[i].question;
+    qs.map(indv => {
+        if (reversedQs[i].scale) reverseScale(indv);
+    });
+    reversedQs[i].reversed = true;
+}
+
 
 /* Choose summary tables */
 var loopTables = questions.map(i => {
