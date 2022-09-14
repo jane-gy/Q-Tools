@@ -1,5 +1,7 @@
-includeFile('Q-Tools/applyNets.QScript')
+includeFile('/Users/JaneKim/OneDrive - NRG/Documents - Data Processing/2022/Q/Q-Tools/Q-Tools/Nets.QScript')
+
+var e = '/this/is/a/path/to/a/file.html'
 
 dataFile = project.dataFiles[0]
 
-createNet(dataFile, "QRATE", [0,1], "Top 2 Box TEST");
+createNetAll(dataFile, "QRATE", [0,1], "Top 2 Box TEST");
