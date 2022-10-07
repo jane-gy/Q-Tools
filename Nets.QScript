@@ -56,7 +56,7 @@ function createNetAll(dataFile, qName, values, label, hidden=null) {
 function makeNet(q, values, label, hidden=null) {
 	if (hidden != null) {
 		try {
-			q.dataReduction.hide(hidden)
+			q.dataReduction.hide(hidden);
 		} catch (e) {}
 	}
 
@@ -66,4 +66,23 @@ function makeNet(q, values, label, hidden=null) {
 	var lastLabel = labels[labels.length - 1];
 	
 	q.dataReduction.moveAfter(label, lastLabel);
+}
+
+/**
+ * 
+ * @param {DataFile} dataFile A datafile object
+ * @param {String} qName The name of the question new net should be applied to
+ * @param {Array} hidden A list of strings which represent the row name(s) that should be hidden
+ */
+function hideRow(dataFile, qName, hidden) {
+	var q = dataFile.getQuestionsByName(qName)[0];
+
+	hidden.forEach(x => {
+		try {
+			q.dataReduction.hide(x);
+		} catch (e) {
+			var message = x + " does not exist."
+			alert(message);
+		}
+	});
 }

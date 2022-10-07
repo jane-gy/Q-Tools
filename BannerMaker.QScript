@@ -17,10 +17,10 @@ function generateUID() {
 function createQuestionObjs(bannerT, bannerCT, bannerCQ) {
     // Creates a Total variable for the Total column
     var questionObjs = new Array();
-    questionObjs.push({question: "Total",
-                   variables: ["Total"],
-                   definition: ["Respondent_Status==3"]
-                  });
+    // questionObjs.push({question: "Total",
+    //                variables: ["Total"],
+    //                definition: ["Respondent_Status==3"]
+    //               });
     
     
     var tempCT = [];
@@ -83,6 +83,15 @@ function createNewBannerQuestion(mainFile, questionObj) {
         newVars.push(varName);
 
         var definition = definitions[i];
+        // var regex = /(.*)==.*/;
+        // var getVar = definition.replace(regex, '$1');
+
+        // var jsScript = `
+        // if (${definition}) 1;
+        // else if(${getVar} > 0) 0;
+        // `;
+
+
         var jsScript = `
         if (${definition}) 1;
         else 0;

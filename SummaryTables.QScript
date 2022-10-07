@@ -20,13 +20,13 @@ function readQs(questions) {
     var pickOnes = questions;
 //     var pickOnes = getAllQuestionsByTypes([dataFile], ["Pick One", "Pick One - Multi"]);
 
+    var reg_rr = "(.*?_(?:r|c)(\\d+))(?:r|c)(\\d+):*.*?" // r1r1,r2r1,r3r1 or r1r1,r1r2,r1r3 or r1c1,r2c1,r3c1
     var reg_r = "(.*?)r\\d+:*.*?"
     var reg_c = "(.*?)c\\d+:*.*?"
     var reg_und = "(.*?)_\\d+:*.*?"
-    var reg_rr = "(.*?)r(\\d)+r(\\d+):*.*?" // r1r1,r2r1,r3r1
-    var reg_rc = "(.*?)r(\\d+)c(\\d+):*.*?" // r1c1,r2c1,r3c1
+    // var reg_rc = "(.*?)r(\\d+)c(\\d+):*.*?" // 
 
-    var regArr = [reg_r, reg_c, reg_und, reg_rr, reg_rc];
+    var regArr = [reg_rr, reg_r, reg_c, reg_und];
 
     var loopCont = false;
     var reg_chosen;
@@ -169,7 +169,15 @@ function createSumTable(dataFile, questionObj, nonscale, scale, numeric, custom,
                     setCountThisValueForVariablesInQuestion(question, j, false);
                 }
             }
-            dataFile.moveAfter(duplicatedVars, lastVar);
+
+            if (i==0) {
+                dataFile.moveAfter(duplicatedVars, lastVar);
+            }
+            else {
+                var prevName = core + " (" + labels[i-1] + ")";
+                var prevVariables = dataFile.getQuestionByName(prevName).variables;
+                dataFile.moveAfter(duplicatedVars, prevVariables[prevVariables.length - 1]);
+            }
             duplicatedVars = [];
         }
     }

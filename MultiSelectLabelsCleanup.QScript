@@ -19,9 +19,17 @@ var variables = mainFile.variables;
 // Clean up variable names for mulit-selects
 var pickAny = getAllQuestionsByTypes([mainFile], ["Pick Any"]);
 for(var i = 0; i < pickAny.length; i++) {
-    const regex = /^(.*) - .*\?/gim;
-    // const regex = /^([A-Za-z_0-9)()]+ .*?)\s*-?\s*(.*)/gim;
-    var cleanLabel = pickAny[i].label.replace(regex, '\$1');
-    log(cleanLabel);
-    pickAny[i].label = cleanLabel;
+    const regex = /^(.*) - For the following.*\?/gim;
+    // const regex = /^([A-Za-z_0-9)()/'&]+ .*?)\s*-?\s*(.*)/gim;
+    var vars = pickAny[i].variables;
+    vars.forEach(function (x) {
+        var str = x.label;
+        var ind = str.lastIndexOf('-');
+        if (str.search(/\?/) > 0) {
+            log(x.name + ": " + ind + " " + str.slice(0,ind));
+        }
+    });
+//     var cleanLabel = pickAny[i].label.replace(regex, '\$1');
+//     log(cleanLabel);
+//     pickAny[i].label = cleanLabel;
 } 
